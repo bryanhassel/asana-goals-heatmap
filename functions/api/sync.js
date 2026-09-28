@@ -161,9 +161,15 @@ export async function onRequestPost(context) {
     }
 
     const sortedSites = Object.values(sitesDict).sort((a, b) => a.name.localeCompare(b.name));
-    const nowStr = new Date().toLocaleDateString("en-US", { 
-      month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" 
-    });
+    const nowStr = new Date().toLocaleString("en-US", { 
+      timeZone: "America/New_York",
+      month: "short", 
+      day: "numeric", 
+      year: "numeric", 
+      hour: "numeric", 
+      minute: "2-digit",
+      hour12: true 
+    }) + " ET";
 
     const matrixData = {
       last_synced: nowStr,

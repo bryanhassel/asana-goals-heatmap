@@ -170,8 +170,23 @@ function updateHeaderMeta() {
 
   if (period) period.textContent = state.data.time_period || 'FY27';
   if (lastSync && state.data.last_synced) {
-    const d = new Date(state.data.last_synced);
-    lastSync.textContent = 'Updated ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const raw = String(state.data.last_synced).trim();
+    if (raw.includes('ET')) {
+      lastSync.textContent = 'Updated ' + raw;
+    } else {
+      const d = new Date(raw);
+      if (!isNaN(d.getTime())) {
+        const timeStr = d.toLocaleTimeString('en-US', {
+          timeZone: 'America/New_York',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+        lastSync.textContent = `Updated Today at ${timeStr} ET`;
+      } else {
+        lastSync.textContent = `Updated ${raw} ET`;
+      }
+    }
   }
 }
 
@@ -803,100 +818,129 @@ function setupEventListeners() {
     if (e.target.id === 'cell-modal') closeModal();
   });
 
+  // Settings Modal Closers
+  const closeSettings = () => document.getElementById('settings-modal').classList.add('hidden');
+  document.getElementById('btn-settings').addEventListener('click', () => {
+    document.getElementById('settings-modal').classList.remove('hidden');
+  });
+  document.getElementById('settings-close').addEventListener('click', closeSettings);
+  document.getElementById('settings-dismiss').addEventListener('click', closeSettings);
+  document.getElementById('settings-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'settings-modal') closeSettings();
+  });
+
   // Export CSV
-  const btnExport = document.getElementById('btn-export-csv');
-  if (btnExport) {
-    btnExport.addEventListener('click', exportCSV);
-  }
+  document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
 
   // Sync Button
-  const btnSync = document.getElementById('btn-sync');
-  if (btnSync) {
-    btnSync.addEventListener('click', () => triggerAsanaSync({ silent: false }));
-  }
+  document.getElementById('btn-sync').addEventListener('click', triggerAsanaSync);
+
+  // Save Credentials Button in Settings Modal
+  document.getElementById('btn-save-credentials').addEventListener('click', async () => {
+    const pat = document.getElementById('cfg-pat').value.trim();
+    const workspace = document.getElementById('cfg-workspace').value.trim();
+    if (!pat) {
+      alert('Please enter your Asana Personal Access Token.');
+      return;
+    }
+    await saveCredentialsAndSync(pat, workspace);
+  });
+
+  // Test Connection Button
+  document.getElementById('btn-test-connection').addEventListener('click', async () => {
+    const pat = document.getElementById('cfg-pat').value.trim();
+    if (!pat) {
+      alert('Please enter an Asana Personal Access Token to test.');
+      return;
+    }
+    testAsanaConnection(pat);
+  });
 }
 
 /**
  * Trigger Asana Sync via Backend
- * options.silent: true on initial load so it auto-updates quietly without popup alert
  */
-async function triggerAsanaSync(options = {}) {
-  const isSilent = options.silent === true;
+async function triggerAsanaSync() {
   const syncBtn = document.getElementById('btn-sync');
-  const originalHtml = syncBtn ? syncBtn.innerHTML : '';
-
-  if (syncBtn) {
-    syncBtn.disabled = true;
-    syncBtn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 mr-1.5 animate-spin"></i> ${isSilent ? 'Checking Asana...' : 'Syncing...'}`;
-    if (window.lucide) window.lucide.createIcons();
-  }
+  const originalText = syncBtn.innerHTML;
+  syncBtn.disabled = true;
+  syncBtn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 mr-1.5 animate-spin"></i> Syncing...`;
+  if (window.lucide) window.lucide.createIcons();
 
   try {
     const res = await fetch('/api/sync', { method: 'POST' });
     if (res.ok) {
       const result = await res.json();
-      // Only overwrite matrix if valid dataset with sites and cells was returned
-      if (result && Array.isArray(result.sites) && result.cells) {
-        state.data = result;
-        updateHeaderMeta();
-        renderApp();
-        if (!isSilent) {
-          showToast(`Live Asana sync complete! Updated ${result.sites.length} school systems.`);
-        }
-      } else {
-        console.warn('Sync did not return full matrix payload:', result);
-        if (!isSilent) {
-          showToast('Sync completed but full matrix payload was not returned.', true);
-        }
-      }
+      state.data = result;
+      updateHeaderMeta();
+      renderApp();
+      alert('Sync successful! Heatmap updated with the latest Asana data.');
     } else {
       const err = await res.json().catch(() => ({}));
-      if (!isSilent) {
-        showToast(err.message || err.error || 'Unable to sync with Asana API.', true);
-      }
+      alert(err.message || 'Unable to sync with Asana API. Check your credentials in settings.');
     }
   } catch (err) {
-    console.error('Sync request failed:', err);
-    if (!isSilent) {
-      showToast('Could not complete sync with Asana. Please check your connection.', true);
-    }
+    alert('Local backend is running in Demo Mock Mode. To connect live Asana data, configure your API token in Asana Settings.');
   } finally {
-    if (syncBtn) {
-      syncBtn.disabled = false;
-      syncBtn.innerHTML = originalHtml;
-      if (window.lucide) window.lucide.createIcons();
-    }
+    syncBtn.disabled = false;
+    syncBtn.innerHTML = originalText;
+    if (window.lucide) window.lucide.createIcons();
   }
 }
 
 /**
- * Toast Notification
+ * Test Asana Connection
  */
-function showToast(message, isError = false) {
-  const toast = document.getElementById('toast');
-  const toastMsg = document.getElementById('toast-msg');
-  const toastIcon = document.getElementById('toast-icon');
-  if (!toast || !toastMsg) return;
-
-  toastMsg.textContent = message;
-  if (isError) {
-    toast.className = 'fixed bottom-5 right-5 z-50 transform translate-y-0 opacity-100 transition-all duration-300 flex items-center space-x-2.5 px-4 py-2.5 rounded-xl bg-rose-900 text-white text-xs shadow-2xl border border-rose-700';
-    if (toastIcon) {
-      toastIcon.setAttribute('data-lucide', 'alert-circle');
-      toastIcon.className = 'w-4 h-4 text-rose-300';
-    }
-  } else {
-    toast.className = 'fixed bottom-5 right-5 z-50 transform translate-y-0 opacity-100 transition-all duration-300 flex items-center space-x-2.5 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs shadow-2xl border border-slate-700';
-    if (toastIcon) {
-      toastIcon.setAttribute('data-lucide', 'check-circle');
-      toastIcon.className = 'w-4 h-4 text-emerald-400';
-    }
-  }
+async function testAsanaConnection(pat) {
+  const statusBox = document.getElementById('settings-status-box');
+  const statusMsg = document.getElementById('settings-status-msg');
+  statusBox.classList.remove('hidden');
+  statusMsg.className = 'text-xs font-medium text-blue-600 flex items-center';
+  statusMsg.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 mr-1.5 animate-spin"></i> Verifying token with Asana...`;
   if (window.lucide) window.lucide.createIcons();
 
-  setTimeout(() => {
-    toast.className = 'fixed bottom-5 right-5 z-50 transform translate-y-10 opacity-0 pointer-events-none transition-all duration-300 flex items-center space-x-2.5 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs shadow-2xl border border-slate-700';
-  }, 3500);
+  try {
+    const res = await fetch('https://app.asana.com/api/1.0/users/me', {
+      headers: { 'Authorization': `Bearer ${pat}` }
+    });
+    if (res.ok) {
+      const user = await res.json();
+      statusMsg.className = 'text-xs font-medium text-emerald-700';
+      statusMsg.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5 mr-1 text-emerald-600 inline"></i> Connected as <strong>${user.data.name}</strong> (${user.data.email})`;
+    } else {
+      statusMsg.className = 'text-xs font-medium text-rose-600';
+      statusMsg.innerHTML = `<i data-lucide="x-circle" class="w-3.5 h-3.5 mr-1 text-rose-600 inline"></i> Invalid credentials (HTTP ${res.status}). Please check your PAT.`;
+    }
+  } catch (err) {
+    statusMsg.className = 'text-xs font-medium text-amber-700';
+    statusMsg.innerHTML = `Direct browser test blocked by CORS. The token will be verified via backend server upon saving.`;
+  }
+  if (window.lucide) window.lucide.createIcons();
+}
+
+/**
+ * Save Credentials & Sync
+ */
+async function saveCredentialsAndSync(pat, workspace) {
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ asana_token: pat, workspace_gid: workspace })
+    });
+    if (res.ok) {
+      document.getElementById('settings-modal').classList.add('hidden');
+      await triggerAsanaSync();
+    } else {
+      alert('Could not save credentials to backend server.');
+    }
+  } catch (err) {
+    // If running purely client-side without backend, store in localStorage
+    localStorage.setItem('ASANA_ACCESS_TOKEN', pat);
+    if (workspace) localStorage.setItem('ASANA_WORKSPACE_GID', workspace);
+    alert('Credentials saved locally in browser storage.');
+    document.getElementById('settings-modal').classList.add('hidden');
+  }
 }
 
 /**

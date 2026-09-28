@@ -225,7 +225,13 @@ def sync():
             }
 
     sorted_sites = sorted(sites_dict.values(), key=lambda s: s["name"].lower())
-    now_str = datetime.now().strftime("%b %d, %Y at %I:%M %p")
+
+    try:
+        from zoneinfo import ZoneInfo
+        now_et = datetime.now(ZoneInfo("America/New_York"))
+    except Exception:
+        now_et = datetime.now()
+    now_str = now_et.strftime("%b %d, %Y at %I:%M %p ET")
 
     output = {
         "last_synced": now_str,
