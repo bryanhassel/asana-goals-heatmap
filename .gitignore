@@ -1,0 +1,24 @@
+# Environment variables & secrets (CRITICAL: never commit your Asana token)
+.env
+.env.local
+.env.*.local
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Local cache data containing live organizational notes
+data/asana_cache.json
+
+# Dependencies & Build
+node_modules/
+.wrangler/
+dist/
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

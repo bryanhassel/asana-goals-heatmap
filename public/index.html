@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opportunity Culture — Asana Goals Heatmap</title>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Sticky Table Styling */
+    .table-container {
+      max-height: calc(100vh - 280px);
+      overflow: auto;
+      position: relative;
+    }
+
+    /* Fixed Left Column for Site Names */
+    .sticky-col {
+      position: sticky;
+      left: 0;
+      z-index: 20;
+      background-color: white;
+    }
+
+    .sticky-col-header {
+      position: sticky;
+      left: 0;
+      top: 0;
+      z-index: 35;
+      background-color: #f8fafc;
+    }
+
+    /* Fixed Top Column Headers */
+    .sticky-header-row-1 {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .sticky-header-row-2 {
+      position: sticky;
+      top: 36px;
+      z-index: 30;
+    }
+
+    .sticky-header-row-3 {
+      position: sticky;
+      top: 136px;
+      z-index: 30;
+    }
+
+    /* Cell shadow on sticky border */
+    .sticky-col::after, .sticky-col-header::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: -4px;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(to right, rgba(0,0,0,0.06), transparent);
+      pointer-events: none;
+    }
+
+    /* Smooth transitions */
+    .status-cell {
+      transition: all 0.15s ease-in-out;
+    }
+    .status-cell:hover {
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      z-index: 10;
+    }
+
+    /* Print media */
+    @media print {
+      .no-print { display: none !important; }
+      .table-container { max-height: none !important; overflow: visible !important; }
+      body { background: white !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- TOP APP BAR -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm no-print">
+    <div class="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-md">
+          <i data-lucide="layout-grid" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-lg font-bold text-slate-900 leading-tight">Opportunity Culture Heatmap</h1>
+            <span id="data-source-badge" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+              <span class="w-1.5 h-1.5 mr-1 rounded-full bg-amber-500 animate-pulse"></span>
+              Demo (Mock Data)
+            </span>
+          </div>
+          <p class="text-xs text-slate-500">District & School System Goals Matrix &bull; <span id="time-period-label">FY27</span> &bull; <span id="last-synced-label">Updated just now</span></p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center space-x-2">
+        <button id="btn-sync" class="inline-flex items-center px-3 py-1.5 border border-slate-300 text-xs font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition shadow-sm">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5 mr-1.5 text-slate-500"></i>
+          Sync from Asana
+        </button>
+
+        <button id="btn-export-csv" class="inline-flex items-center px-3 py-1.5 border border-slate-300 text-xs font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition shadow-sm">
+          <i data-lucide="download" class="w-3.5 h-3.5 mr-1.5 text-slate-500"></i>
+          Export CSV
+        </button>
+
+        <button id="btn-print" onclick="window.print()" class="inline-flex items-center px-3 py-1.5 border border-slate-300 text-xs font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition shadow-sm">
+          <i data-lucide="printer" class="w-3.5 h-3.5 mr-1.5 text-slate-500"></i>
+          Print
+        </button>
+
+        <button id="btn-settings" class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition shadow-sm">
+          <i data-lucide="key" class="w-3.5 h-3.5 mr-1.5"></i>
+          Asana API Settings
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN DASHBOARD CONTENT -->
+  <main class="flex-1 max-w-[1920px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-4">
+    
+    <!-- KPI SUMMARY CARDS -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 no-print">
+      <!-- Total Sites -->
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+        <div class="p-2.5 rounded-lg bg-blue-50 text-blue-600">
+          <i data-lucide="building-2" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-500">Total Sites</p>
+          <p id="kpi-total-sites" class="text-xl font-bold text-slate-800">--</p>
+        </div>
+      </div>
+
+      <!-- Active Goals -->
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+        <div class="p-2.5 rounded-lg bg-indigo-50 text-indigo-600">
+          <i data-lucide="target" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-500">Active Goals</p>
+          <p id="kpi-total-goals" class="text-xl font-bold text-slate-800">--</p>
+        </div>
+      </div>
+
+      <!-- Overall Health % -->
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+        <div class="p-2.5 rounded-lg bg-emerald-50 text-emerald-600">
+          <i data-lucide="trending-up" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-500">Healthy (Achieved/On Track)</p>
+          <p id="kpi-overall-health" class="text-xl font-bold text-emerald-600">--%</p>
+        </div>
+      </div>
+
+      <!-- Closed Achieved -->
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+        <div class="p-2.5 rounded-lg bg-emerald-700 text-white">
+          <i data-lucide="award" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-500">Achieved</p>
+          <p id="kpi-achieved-count" class="text-xl font-bold text-slate-800">--</p>
+        </div>
+      </div>
+
+      <!-- Needs Attention (At Risk / Off Track) -->
+      <div class="bg-white p-3.5 rounded-xl border border-rose-200 shadow-sm flex items-center space-x-3">
+        <div class="p-2.5 rounded-lg bg-rose-50 text-rose-600">
+          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-rose-600">Needs Attention</p>
+          <p id="kpi-needs-attention" class="text-xl font-bold text-rose-700">--</p>
+        </div>
+      </div>
+
+      <!-- No Recent Update -->
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+        <div class="p-2.5 rounded-lg bg-slate-100 text-slate-600">
+          <i data-lucide="clock" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-500">No Recent Update</p>
+          <p id="kpi-no-update-count" class="text-xl font-bold text-slate-700">--</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS & FILTER BAR -->
+    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-3 no-print">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        
+        <!-- Search Site -->
+        <div class="relative flex-1 max-w-md">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input 
+            type="text" 
+            id="search-site" 
+            placeholder="Search school district or site name (e.g. Thomasville, Charters)..." 
+            class="w-full pl-9 pr-8 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50"
+          >
+          <button id="clear-search" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+
+        <!-- Pillar Filter Buttons -->
+        <div class="flex items-center space-x-1.5 p-1 bg-slate-100 rounded-lg border border-slate-200 text-xs">
+          <button data-pillar="all" class="pillar-btn px-2.5 py-1 rounded-md font-semibold bg-white text-slate-800 shadow-xs transition">
+            All Goals (12)
+          </button>
+          <button data-pillar="reach" class="pillar-btn px-2.5 py-1 rounded-md font-medium text-slate-600 hover:text-slate-900 transition">
+            Reach (2)
+          </button>
+          <button data-pillar="results" class="pillar-btn px-2.5 py-1 rounded-md font-medium text-slate-600 hover:text-slate-900 transition">
+            Results (5)
+          </button>
+          <button data-pillar="relationships" class="pillar-btn px-2.5 py-1 rounded-md font-medium text-slate-600 hover:text-slate-900 transition">
+            Relationships (5)
+          </button>
+        </div>
+
+        <!-- Status Filter Dropdown & View Mode -->
+        <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-1.5">
+            <label for="filter-status" class="text-xs font-medium text-slate-600 whitespace-nowrap">Filter Status:</label>
+            <select id="filter-status" class="text-xs rounded-lg border border-slate-300 py-1.5 pl-2.5 pr-8 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="all">All Statuses</option>
+              <option value="attention">Needs Attention (At Risk / Off Track)</option>
+              <option value="on_track">Open - On track</option>
+              <option value="at_risk">Open - At risk</option>
+              <option value="off_track">Open - Off track</option>
+              <option value="no_recent_update">Open - No recent update</option>
+              <option value="achieved">Closed - Achieved</option>
+              <option value="partial">Closed - Partial</option>
+              <option value="missed">Closed - Missed</option>
+              <option value="dropped">Closed - Dropped</option>
+            </select>
+          </div>
+
+          <!-- Sort Sites -->
+          <div class="flex items-center space-x-1.5">
+            <label for="sort-sites" class="text-xs font-medium text-slate-600 whitespace-nowrap">Sort:</label>
+            <select id="sort-sites" class="text-xs rounded-lg border border-slate-300 py-1.5 pl-2.5 pr-8 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="name_asc">Site Name (A-Z)</option>
+              <option value="name_desc">Site Name (Z-A)</option>
+              <option value="health_desc">Health % (High to Low)</option>
+              <option value="health_asc">Health % (Low to High)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLOR LEGEND BAR (Interactive Click to Filter) -->
+      <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <span class="font-semibold text-slate-600 text-[11px] uppercase tracking-wider flex items-center">
+          <i data-lucide="palette" class="w-3.5 h-3.5 mr-1 text-slate-400"></i>
+          Legend (Click to filter):
+        </span>
+        
+        <div class="flex flex-wrap items-center gap-1.5" id="legend-container">
+          <!-- Open Statuses -->
+          <button data-legend-status="on_track" class="legend-chip inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border border-emerald-300 bg-emerald-100 text-emerald-900 hover:opacity-90 transition">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>
+            Open: On track (<span id="count-on_track">0</span>)
+          </button>
+
+          <button data-legend-status="at_risk" class="legend-chip inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border border-amber-300 bg-amber-100 text-amber-950 hover:opacity-90 transition">
+            <span class="w-2 h-2 rounded-full bg-amber-400 mr-1.5"></span>
+            Open: At risk (<span id="count-at_risk">0</span>)
+          </button>
+
+          <button data-legend-status="off_track" class="legend-chip inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border border-rose-300 bg-rose-100 text-rose-950 hover:opacity-90 transition">
+            <span class="w-2 h-2 rounded-full bg-rose-500 mr-1.5"></span>
+            Open: Off track (<span id="count-off_track">0</span>)
+          </button>
+
+          <button data-legend-status="no_recent_update" class="legend-chip inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border border-slate-300 bg-slate-100 text-slate-700 hover:opacity-90 transition">
+            <span class="w-2 h-2 rounded-full bg-slate-400 mr-1.5"></span>
+            Open: No update (<span id="count-no_recent_update">0</span>)
+          </button>
+
+          <span class="text-slate-300">|</span>
+
+          <!-- Closed Statuses -->
+          <button data-legend-status="achieved" class="legend-chip inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border border-emerald-800 bg-emerald-700 text-white hover:opacity-90 transition">
+            <i data-lucide="check" class="w-2.5 h-2.5 mr-1"></i>
+            Achieved (<span id="count-achieved">0</span>)
+          </button>
+
+          <button data-legend-status="partial" class="legend-chip inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border border-amber-800 bg-amber-700 text-white hover:opacity-90 transition">
+            <i data-lucide="minus" class="w-2.5 h-2.5 mr-1"></i>
+            Partial (<span id="count-partial">0</span>)
+          </button>
+
+          <button data-legend-status="missed" class="legend-chip inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border border-rose-800 bg-rose-700 text-white hover:opacity-90 transition">
+            <i data-lucide="x" class="w-2.5 h-2.5 mr-1"></i>
+            Missed (<span id="count-missed">0</span>)
+          </button>
+
+          <button data-legend-status="dropped" class="legend-chip inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border border-slate-700 bg-slate-600 text-white hover:opacity-90 transition">
+            <i data-lucide="slash" class="w-2.5 h-2.5 mr-1"></i>
+            Dropped (<span id="count-dropped">0</span>)
+          </button>
+
+          <button id="btn-reset-filters" class="hidden ml-2 text-blue-600 hover:text-blue-800 underline font-medium text-xs">
+            Reset Filter
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVE FILTER NOTIFICATION BANNER -->
+    <div id="filter-banner" class="hidden p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-900 flex items-center justify-between no-print shadow-xs">
+      <div class="flex items-center space-x-2.5">
+        <span class="p-1.5 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+          <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+        </span>
+        <div>
+          <span class="font-bold">Active Status Filter:</span>
+          <span id="filter-banner-text" class="ml-1">Showing goals with selected status</span>
+          <span class="text-indigo-600 ml-1 font-medium hidden sm:inline">&bull; Matching cells are highlighted with a ring, non-matching cells are dimmed</span>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <label class="inline-flex items-center space-x-1.5 text-xs text-indigo-800 cursor-pointer select-none">
+          <input type="checkbox" id="chk-hide-non-matching" checked class="rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500">
+          <span>Only show matching sites</span>
+        </label>
+        <button id="btn-banner-clear" class="px-2.5 py-1 rounded-md bg-white border border-indigo-200 text-indigo-700 font-semibold hover:bg-indigo-100 transition shadow-xs">
+          Clear Filter
+        </button>
+      </div>
+    </div>
+
+    <!-- HEATMAP MATRIX TABLE -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="table-container">
+        <table class="w-full text-left border-collapse" id="heatmap-table">
+          <thead>
+            <!-- HEADER ROW 1: Pillars & Grouping -->
+            <tr class="sticky-header-row-1 bg-slate-100 text-xs font-bold text-slate-700 uppercase tracking-wider border-b border-slate-300">
+              <th class="sticky-col-header p-2.5 w-72 min-w-[280px] bg-slate-100 border-r border-slate-200">
+                School System / Project
+              </th>
+              
+              <!-- Reach Pillar Span -->
+              <th id="pillar-span-reach" colspan="2" class="p-2 text-center bg-blue-50 text-blue-900 border-r border-blue-200 border-b border-blue-300">
+                <span class="inline-flex items-center font-bold">
+                  <span class="w-2 h-2 rounded-full bg-blue-600 mr-1.5"></span>
+                  Reach Pillar
+                </span>
+              </th>
+
+              <!-- Results Pillar Span -->
+              <th id="pillar-span-results" colspan="5" class="p-2 text-center bg-emerald-50 text-emerald-900 border-r border-emerald-200 border-b border-emerald-300">
+                <span class="inline-flex items-center font-bold">
+                  <span class="w-2 h-2 rounded-full bg-emerald-600 mr-1.5"></span>
+                  Results Pillar
+                </span>
+              </th>
+
+              <!-- Relationships Pillar Span -->
+              <th id="pillar-span-relationships" colspan="5" class="p-2 text-center bg-purple-50 text-purple-900 border-r border-purple-200 border-b border-purple-300">
+                <span class="inline-flex items-center font-bold">
+                  <span class="w-2 h-2 rounded-full bg-purple-600 mr-1.5"></span>
+                  Relationships Pillar
+                </span>
+              </th>
+
+              <!-- Site Health Summary -->
+              <th class="p-2 text-center w-36 min-w-[140px] bg-slate-100 text-slate-700 border-b border-slate-300">
+                Site Health
+              </th>
+            </tr>
+
+            <!-- HEADER ROW 2: Specific Goal Titles -->
+            <tr class="sticky-header-row-2 bg-slate-50 text-xs font-semibold text-slate-800 border-b border-slate-300" id="goals-header-row">
+              <th class="sticky-col-header p-2.5 bg-slate-50 text-slate-500 font-normal border-r border-slate-200">
+                <span class="text-[11px]" id="site-count-indicator">Showing 22 sites</span>
+              </th>
+              <!-- Dynamically populated goal header cells -->
+            </tr>
+
+            <!-- HEADER ROW 3: Column Summary Progress Bars -->
+            <tr class="sticky-header-row-3 bg-white text-[11px] text-slate-500 border-b-2 border-slate-300" id="goals-summary-row">
+              <th class="sticky-col-header p-2 bg-white font-medium text-slate-600 border-r border-slate-200">
+                Goal Health Distribution
+              </th>
+              <!-- Dynamically populated column progress summaries -->
+            </tr>
+          </thead>
+          <tbody id="heatmap-body" class="divide-y divide-slate-200 text-xs">
+            <!-- Dynamically populated site rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FOOTER / HINT -->
+    <div class="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2 no-print">
+      <div class="flex items-center space-x-2">
+        <i data-lucide="info" class="w-4 h-4 text-blue-500"></i>
+        <span><strong>Tip:</strong> Click on any cell to view detailed status notes, author, and open the goal directly in Asana. Use horizontal scroll for all 12 goals.</span>
+      </div>
+      <div>
+        <span>Opportunity Culture &copy; Public Impact</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- CELL DETAIL MODAL -->
+  <div id="cell-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in duration-150">
+      
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between pb-3 border-b border-slate-100">
+        <div>
+          <span id="modal-pillar-badge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold mb-1">Pillar</span>
+          <h3 id="modal-site-name" class="text-base font-bold text-slate-900">Site Name</h3>
+          <p id="modal-goal-title" class="text-xs text-slate-600 mt-0.5 font-medium">Parent Goal Title</p>
+        </div>
+        <button id="modal-close" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="space-y-3.5 text-xs">
+        
+        <!-- Status Card -->
+        <div class="p-3.5 rounded-xl border flex items-center justify-between" id="modal-status-card">
+          <div class="space-y-1">
+            <span class="text-[11px] text-slate-500 font-medium">Status</span>
+            <div id="modal-status-badge" class="inline-flex items-center px-2.5 py-1 rounded-md font-bold text-xs">
+              Status Name
+            </div>
+          </div>
+          <div class="text-right space-y-1">
+            <span class="text-[11px] text-slate-500 font-medium">Reported Progress</span>
+            <div class="text-base font-bold text-slate-800" id="modal-progress-text">0%</div>
+          </div>
+        </div>
+
+        <!-- Subgoal / Work Target -->
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1">
+          <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Subgoal Work Item</p>
+          <p id="modal-subgoal-name" class="font-medium text-slate-800 text-xs">Subgoal Name</p>
+        </div>
+
+        <!-- Latest Status Notes -->
+        <div class="space-y-1">
+          <div class="flex items-center justify-between text-[11px] text-slate-500">
+            <span class="font-semibold uppercase tracking-wider">Latest Update Commentary</span>
+            <span id="modal-update-meta">Updated by Author on Date</span>
+          </div>
+          <div id="modal-notes" class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 leading-relaxed max-h-36 overflow-y-auto">
+            Commentary text goes here.
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+        <span class="text-[11px] text-slate-400">Time Period: <strong class="text-slate-600">FY27</strong></span>
+        <div class="flex items-center space-x-2">
+          <button id="modal-dismiss" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium text-xs">
+            Close
+          </button>
+          <a id="modal-asana-link" href="#" target="_blank" class="inline-flex items-center px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs shadow-sm transition">
+            <span>Open in Asana</span>
+            <i data-lucide="external-link" class="w-3.5 h-3.5 ml-1.5"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-10 opacity-0 pointer-events-none transition-all duration-300 flex items-center space-x-2.5 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs shadow-2xl border border-slate-700">
+    <i id="toast-icon" data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toast-msg" class="font-medium">Notification</span>
+  </div>
+
+  <!-- Load bundled mock data script first -->
+  <script src="mock_data.js"></script>
+  <!-- Main application script -->
+  <script src="app.js"></script>
+</body>
+</html>

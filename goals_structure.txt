@@ -1,0 +1,57 @@
+
+Structure of goals in ASANA:
+
+OC Consulting Team Goals:
+
+* Reach: 90% of districts commit to reaching 75-100% schools
+* Reach: 50% of Y3+ schools have a specific staffing, $, and hiring plan to reac...
+* Results: 500+ schools are certified at any level
+* Results: MCL Protected Time - 20% increase of implementing certified schoo...
+* Results: Tutoring - 20% increase of implementing certified schools are at lev...
+* Results: Team Reach - 20% increase of implementing certified schools are at ...
+* Results: MCL Reach - 20% increase of implementing certified schools are at l...
+* Relationships: 2 written reports, 2 conversations, and 2 information touchpoi...
+* Relationships: Client Net Promotor Score "OC": 60+
+* Relationships: Client Net Promotor Score "PI": 50+
+* Relationships: MCL Net Promotor Score "OC": 60+
+* Relationships: Client Net Promotor Score "Portal": 45+
+
+
+Under each goal, Project by Project subgoals (the same goal for each project - each project is an Opportunity Culture site. Partial list:
+
+Here is the text extracted from the screenshot, structured as a list with the status and organization for each entry:
+
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | Philadelphia Charters f...
+* **District commits to reaching 75-100% of schools** | Status: Achieved | FY27 | Thomasville City Schools
+* **District commits to reaching 75-100% of schools** | Status: On track (0%) | FY27 | Columbus County Scho...
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | Asheboro City Schools ...
+* **District commits to reaching 75-100% of schools** | Status: On track (0%) | FY27 | Warren County Schools
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | Under the Canopy
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | Berryhill Public Schools
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | Harding Charter Prep
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | Millwood Public Schools
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | Oklahoma City Public S...
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | RISE STEAM Academy [...
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | Las Vegas City Schools
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | RISE STEAM Academy [...
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | Hulbert School District
+* **District commits to reaching 75-100% of schools** | Status: Achieved | FY27 | Mountain Mahogany C...
+* **District commits to reaching 75-100% of schools** | Status: Achieved | FY27 | Moreno Valley Prep (C...
+* **District commits to reaching 75-100% of schools** | Status: Achieved | FY27 | House Municipal Schools
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | Espanola Public Schools
+* **District commits to reaching 75-100% of schools** | Status: Achieved | FY27 | East Mountain (CMO)
+* **District commits to reaching 75-100% of schools** | Status: Achieved | FY27 | Elizabeth City-Pasquota...
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | Sampson County Scho...
+* **District commits to reaching 75-100% of schools** | Status: No recent u... (0%) | FY27 | Asheboro City Schools ...
+
+Each goal can have one of the following statuses:
+
+# Open - On track (color = light green)
+# Open - At risk (color = light yellow)
+# Open - Off track  (color = pink)
+ OR
+# Closed - Achieved (color = dark green)
+# Closed - Partial  (color = dark yellow)
+# Closed - Missed  (color = dark red)
+# Closed - Dropped   (color = gray)
+
