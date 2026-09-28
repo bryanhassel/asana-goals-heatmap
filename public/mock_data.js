@@ -1,6 +1,6 @@
-// Standalone live cache export generated at Sep 28, 2026 at 02:58 PM
+// Standalone live cache export generated at Sep 28, 2026 at 05:22 PM
 window.EMBEDDED_MOCK_DATA = {
-  "last_synced": "Sep 28, 2026 at 02:58 PM",
+  "last_synced": "Sep 28, 2026 at 05:22 PM",
   "data_source": "live",
   "time_period": "FY27",
   "workspace_name": "Public Impact",
@@ -34,120 +34,108 @@ window.EMBEDDED_MOCK_DATA = {
       "name": "Reach: 90% of districts commit to reaching 75-100% schools",
       "short_name": "District Commitment (75-100%)",
       "pillar": "reach",
+      "pillar_id": "reach",
       "target": "90%",
-      "order": 1,
-      "description": "District leadership formally commits to expanding Opportunity Culture models to 75-100% of schools.",
-      "pillar_id": "reach"
+      "order": 1
     },
     {
       "gid": "1217171254793815",
       "name": "Reach: 50% of Y3+ schools have a specific staffing, $, and hiring plan to reach 75-100% of students in \u201827-28 (on track for Level 2+)",
       "short_name": "Y3+ Staffing & $ Plan",
       "pillar": "reach",
+      "pillar_id": "reach",
       "target": "50%",
-      "order": 2,
-      "description": "Year 3+ implementing schools have sustainable financial allocations, staffing models, and hiring plans to reach 75-100% of students.",
-      "pillar_id": "reach"
+      "order": 2
     },
     {
       "gid": "1217171254793775",
       "name": "Results: 500+ schools are certified at any level",
       "short_name": "Certified Schools",
       "pillar": "results",
+      "pillar_id": "results",
       "target": "500+",
-      "order": 3,
-      "description": "Schools achieving official Opportunity Culture certification at any recognition level.",
-      "pillar_id": "results"
+      "order": 3
     },
     {
       "gid": "1217867349410715",
       "name": "Results: MCL Protected Time - 20% increase of implementing certified schools are at level 2+",
       "short_name": "MCL Protected Time",
       "pillar": "results",
+      "pillar_id": "results",
       "target": "+20%",
-      "order": 4,
-      "description": "Multi-Classroom Leaders receive protected co-planning and coaching time with teaching teams (Level 2+).",
-      "pillar_id": "results"
+      "order": 4
     },
     {
       "gid": "1217867349410712",
       "name": "Results: Tutoring - 20% increase of implementing certified schools are at level 2+",
       "short_name": "Tutoring L2+",
       "pillar": "results",
+      "pillar_id": "results",
       "target": "+20%",
-      "order": 5,
-      "description": "Schools providing high-dosage paraprofessional or team tutoring at Level 2+ standard.",
-      "pillar_id": "results"
+      "order": 5
     },
     {
       "gid": "1217867349410709",
       "name": "Results: Team Reach - 20% increase of implementing certified schools are at level 2+",
       "short_name": "Team Reach L2+",
       "pillar": "results",
+      "pillar_id": "results",
       "target": "+20%",
-      "order": 6,
-      "description": "Team teachers supported by Multi-Classroom Leaders reaching standard student ratios.",
-      "pillar_id": "results"
+      "order": 6
     },
     {
       "gid": "1217867349410706",
       "name": "Results: MCL Reach - 20% increase of implementing certified schools are at level 2+",
       "short_name": "MCL Reach L2+",
       "pillar": "results",
+      "pillar_id": "results",
       "target": "+20%",
-      "order": 7,
-      "description": "Multi-Classroom Leaders reaching students across grade-level and subject teams.",
-      "pillar_id": "results"
+      "order": 7
     },
     {
       "gid": "1217171254793813",
       "name": "Relationships: 2 written reports, 2 conversations, and 2 information touchpoints with Superintendent Reports",
       "short_name": "Supe Reports & Touchpoints",
       "pillar": "relationships",
+      "pillar_id": "relationships",
       "target": "2x2x2",
-      "order": 8,
-      "description": "Regular executive communication cadence: 2 formal reports, 2 strategic discussions, and 2 touchpoints with district superintendent.",
-      "pillar_id": "relationships"
+      "order": 8
     },
     {
       "gid": "1217171254793809",
       "name": "Relationships: Client Net Promotor Score \"OC\": 60+",
       "short_name": "Client NPS \"OC\"",
       "pillar": "relationships",
+      "pillar_id": "relationships",
       "target": "60+",
-      "order": 9,
-      "description": "District and school partner leadership net promoter score for the Opportunity Culture model.",
-      "pillar_id": "relationships"
+      "order": 9
     },
     {
       "gid": "1217171254793807",
       "name": "Relationships: Client Net Promotor Score \"PI\": 50+",
       "short_name": "Client NPS \"PI\"",
       "pillar": "relationships",
+      "pillar_id": "relationships",
       "target": "50+",
-      "order": 10,
-      "description": "Partner net promoter score rating Public Impact consulting team services and support quality.",
-      "pillar_id": "relationships"
+      "order": 10
     },
     {
       "gid": "1217171254793811",
       "name": "Relationships: MCL Net Promotor Score \"OC\": 60+",
       "short_name": "MCL NPS \"OC\"",
       "pillar": "relationships",
+      "pillar_id": "relationships",
       "target": "60+",
-      "order": 11,
-      "description": "Net promoter score from practicing Multi-Classroom Leaders regarding model value and impact.",
-      "pillar_id": "relationships"
+      "order": 11
     },
     {
       "gid": "1217867349410718",
       "name": "Relationships: Client Net Promotor Score \"Portal\": 45+",
       "short_name": "Client NPS \"Portal\"",
       "pillar": "relationships",
+      "pillar_id": "relationships",
       "target": "45+",
-      "order": 12,
-      "description": "Partner feedback and satisfaction score on the Opportunity Culture digital portal experience.",
-      "pillar_id": "relationships"
+      "order": 12
     }
   ],
   "sites": [

@@ -123,8 +123,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (window.lucide) {
     window.lucide.createIcons();
   }
-  // Autoload: fetch fresh update from Asana in the background on every new opening
-  triggerAsanaSync({ silent: true });
 });
 
 /**
@@ -837,21 +835,30 @@ async function triggerAsanaSync(options = {}) {
     const res = await fetch('/api/sync', { method: 'POST' });
     if (res.ok) {
       const result = await res.json();
-      state.data = result;
-      updateHeaderMeta();
-      renderApp();
-      if (!isSilent) {
-        showToast('Live Asana sync complete! Updated all 39 school systems.');
+      // Only overwrite matrix if valid dataset with sites and cells was returned
+      if (result && Array.isArray(result.sites) && result.cells) {
+        state.data = result;
+        updateHeaderMeta();
+        renderApp();
+        if (!isSilent) {
+          showToast(`Live Asana sync complete! Updated ${result.sites.length} school systems.`);
+        }
+      } else {
+        console.warn('Sync did not return full matrix payload:', result);
+        if (!isSilent) {
+          showToast('Sync completed but full matrix payload was not returned.', true);
+        }
       }
     } else {
       const err = await res.json().catch(() => ({}));
       if (!isSilent) {
-        showToast(err.message || 'Unable to sync with Asana API. Check your .env token.', true);
+        showToast(err.message || err.error || 'Unable to sync with Asana API.', true);
       }
     }
   } catch (err) {
+    console.error('Sync request failed:', err);
     if (!isSilent) {
-      showToast('Could not connect to sync service. Ensure python server.py is running.', true);
+      showToast('Could not complete sync with Asana. Please check your connection.', true);
     }
   } finally {
     if (syncBtn) {
@@ -863,7 +870,7 @@ async function triggerAsanaSync(options = {}) {
 }
 
 /**
- * Toast Notification (non-intrusive alert replacement)
+ * Toast Notification
  */
 function showToast(message, isError = false) {
   const toast = document.getElementById('toast');
