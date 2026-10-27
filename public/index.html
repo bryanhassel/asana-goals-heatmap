@@ -279,7 +279,7 @@
         </div>
 
         <!-- Status Filter Dropdown & View Mode -->
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-2 flex-wrap gap-y-2">
           <div class="flex items-center space-x-1.5">
             <label for="filter-status" class="text-xs font-medium text-slate-600 whitespace-nowrap">Filter Status:</label>
             <select id="filter-status" class="text-xs rounded-lg border border-slate-300 py-1.5 pl-2.5 pr-8 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -305,6 +305,17 @@
               <option value="health_desc">Health % (High to Low)</option>
               <option value="health_asc">Health % (Low to High)</option>
             </select>
+          </div>
+
+          <!-- Goal Names Display Toggle (Short vs Full) -->
+          <div class="flex items-center space-x-1 p-1 bg-slate-100 rounded-lg border border-slate-200 text-xs">
+            <span class="text-[11px] font-medium text-slate-500 px-1 hidden sm:inline">Titles:</span>
+            <button id="toggle-titles-abbr" type="button" class="px-2 py-0.5 rounded-md font-semibold bg-white text-slate-800 shadow-xs transition" title="Show compact abbreviated goal names in table headers">
+              Short
+            </button>
+            <button id="toggle-titles-full" type="button" class="px-2 py-0.5 rounded-md font-medium text-slate-600 hover:text-slate-900 transition" title="Show complete full goal names in table headers">
+              Full
+            </button>
           </div>
         </div>
       </div>
@@ -600,6 +611,100 @@
       </div>
     </div>
   </div>
+
+  <!-- GOAL DETAIL MODAL -->
+  <div id="goal-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in duration-150">
+      
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between pb-3 border-b border-slate-100">
+        <div>
+          <span id="goal-modal-pillar-badge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold mb-1">Pillar</span>
+          <h3 id="goal-modal-title" class="text-base font-bold text-slate-900 leading-snug">Parent Goal Title</h3>
+          <p id="goal-modal-target" class="text-xs text-slate-500 mt-0.5">Target Metric</p>
+        </div>
+        <button id="goal-modal-close" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="space-y-3.5 text-xs">
+        <!-- Goal Overview Card -->
+        <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+          <div class="flex items-center justify-between text-slate-600">
+            <span class="font-semibold text-[11px] uppercase tracking-wider text-slate-500">Pillar & Purpose</span>
+            <span id="goal-modal-pillar-name" class="font-bold text-slate-800 text-xs">Reach</span>
+          </div>
+          <p id="goal-modal-pillar-desc" class="text-xs text-slate-600 leading-relaxed">Pillar description here.</p>
+        </div>
+
+        <!-- Aggregate Adoption & Health Stats -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-[11px] text-slate-600">
+            <span class="font-semibold uppercase tracking-wider text-slate-500">District Adoption & Health</span>
+            <span id="goal-modal-overall-health" class="font-bold text-emerald-700">0% on track</span>
+          </div>
+          <div id="goal-modal-status-breakdown" class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-center">
+            <!-- Dynamically populated status count badges -->
+          </div>
+        </div>
+
+        <!-- Goal Hierarchy info -->
+        <div class="bg-blue-50/60 p-3 rounded-lg border border-blue-100 text-blue-900 text-[11px] flex items-start space-x-2">
+          <i data-lucide="info" class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5"></i>
+          <span>This parent goal is supported by district subgoals tracked across participating Opportunity Culture partner school systems.</span>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+        <span class="text-[11px] text-slate-400">Time Period: <strong class="text-slate-600">FY27</strong></span>
+        <div class="flex items-center space-x-2">
+          <button id="goal-modal-dismiss" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium text-xs">
+            Close
+          </button>
+          <a id="goal-modal-asana-link" href="#" target="_blank" class="inline-flex items-center px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs shadow-sm transition">
+            <span>Open Parent Goal in Asana</span>
+            <i data-lucide="external-link" class="w-3.5 h-3.5 ml-1.5"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOAL HOVER POPOVER (Instant Floating Card) -->
+  <div id="goal-popover" class="fixed z-50 hidden pointer-events-none transition-opacity duration-150 max-w-sm w-80 bg-white rounded-xl shadow-2xl border border-slate-200 p-3.5 space-y-2 text-left">
+    <div class="flex items-center justify-between pb-1.5 border-b border-slate-100">
+      <span id="popover-pillar-badge" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+        Pillar
+      </span>
+      <span id="popover-target-badge" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+        Target
+      </span>
+    </div>
+    <div>
+      <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Full Strategic Goal Statement</p>
+      <h4 id="popover-full-name" class="text-xs font-bold text-slate-900 leading-snug mt-0.5">Full Goal Title</h4>
+    </div>
+    <div class="bg-slate-50 p-2 rounded-lg border border-slate-100 text-[11px] space-y-1">
+      <div class="flex items-center justify-between text-slate-600">
+        <span class="font-medium">Abbreviated:</span>
+        <span id="popover-short-name" class="font-semibold text-slate-800">Short Name</span>
+      </div>
+      <div class="flex items-center justify-between text-slate-600">
+        <span class="font-medium">District Health:</span>
+        <span id="popover-health-summary" class="font-semibold text-emerald-700">0% on track</span>
+      </div>
+    </div>
+    <p class="text-[10px] text-slate-400 italic flex items-center pt-0.5">
+      <i data-lucide="mouse-pointer-click" class="w-3 h-3 mr-1 text-slate-400"></i>
+      Click column header for district breakdown & Asana link
+    </p>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Load bundled mock data script first -->
   <script src="mock_data.js"></script>

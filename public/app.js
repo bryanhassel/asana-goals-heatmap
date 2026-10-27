@@ -11,6 +11,7 @@ const state = {
   searchQuery: '',
   sortBy: 'name_asc',
   selectedCell: null,
+  showFullGoalNames: false,
 };
 
 // Status Configurations matching user specifications
@@ -123,6 +124,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (window.lucide) {
     window.lucide.createIcons();
   }
+  // Automatically sync with Asana in background on initial page load
+  triggerAsanaSync({ silent: true });
 });
 
 /**
@@ -424,6 +427,24 @@ function renderHeatmap() {
 
   // 4. Render Body Rows (Sites & Cells)
   renderTableBody(visibleGoals, visibleSites);
+
+  // 5. Dynamically align sticky header heights
+  adjustStickyHeaderHeights();
+}
+
+/**
+ * Dynamically align sticky header rows 1, 2, and 3
+ */
+function adjustStickyHeaderHeights() {
+  const row1 = document.querySelector('.sticky-header-row-1');
+  const row2 = document.querySelector('.sticky-header-row-2');
+  const row3 = document.querySelector('.sticky-header-row-3');
+  if (row1 && row2 && row3) {
+    const row1Height = row1.offsetHeight;
+    row2.style.top = `${row1Height}px`;
+    const row2Height = row2.offsetHeight;
+    row3.style.top = `${row1Height + row2Height}px`;
+  }
 }
 
 /**
@@ -470,9 +491,14 @@ function renderGoalHeaderRow(visibleGoals) {
     goalsHeaderRow.removeChild(goalsHeaderRow.lastChild);
   }
 
+  const isFull = state.showFullGoalNames === true;
+
   visibleGoals.forEach(g => {
     const th = document.createElement('th');
-    th.className = 'p-2 text-center w-36 min-w-[130px] max-w-[150px] border-r border-slate-200 align-top group';
+    const widthClass = isFull 
+      ? 'w-56 min-w-[210px] max-w-[260px]' 
+      : 'w-36 min-w-[130px] max-w-[150px]';
+    th.className = `p-2 text-center ${widthClass} border-r border-slate-200 align-top group cursor-pointer hover:bg-slate-100/90 transition-colors select-none relative`;
     
     // Pillar color border accent
     const accentColor = g.pillar_id === 'reach' ? 'border-t-2 border-t-blue-500' :
@@ -480,17 +506,29 @@ function renderGoalHeaderRow(visibleGoals) {
                         'border-t-2 border-t-purple-500';
     th.classList.add(...accentColor.split(' '));
 
+    const titleClamp = isFull ? '' : 'line-clamp-2';
+    const displayName = isFull ? g.name : (g.short_name || g.name);
+
     th.innerHTML = `
       <div class="flex flex-col items-center justify-between h-full space-y-1">
-        <span class="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">${g.pillar_id}</span>
-        <span class="font-bold text-slate-800 text-xs leading-snug line-clamp-2 title-tooltip cursor-help" title="${g.name}">
-          ${g.short_name || g.name}
+        <div class="flex items-center space-x-1">
+          <span class="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">${g.pillar_id}</span>
+          <i data-lucide="info" class="w-2.5 h-2.5 text-slate-300 group-hover:text-blue-600 transition-colors"></i>
+        </div>
+        <span class="font-bold text-slate-800 text-xs leading-snug ${titleClamp}">
+          ${displayName}
         </span>
         <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
           Target: ${g.target || '100%'}
         </span>
       </div>
     `;
+
+    // Tooltip / Popover listeners
+    th.addEventListener('mouseenter', () => showGoalHoverPopover(th, g));
+    th.addEventListener('mouseleave', hideGoalHoverPopover);
+    th.addEventListener('click', () => openGoalDetailModal(g));
+
     goalsHeaderRow.appendChild(th);
   });
 
@@ -720,6 +758,178 @@ function openDetailModal(site, goal, cellData, conf) {
 }
 
 /**
+ * Open Goal Detail Modal on Header Click
+ */
+function openGoalDetailModal(g) {
+  const modal = document.getElementById('goal-modal');
+  if (!modal || !state.data) return;
+
+  hideGoalHoverPopover();
+
+  const pillarBadge = document.getElementById('goal-modal-pillar-badge');
+  pillarBadge.textContent = `${g.pillar_id.toUpperCase()} PILLAR`;
+  pillarBadge.className = g.pillar_id === 'reach' ? 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold mb-1 bg-blue-100 text-blue-800 border border-blue-200' :
+                          g.pillar_id === 'results' ? 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold mb-1 bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                          'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold mb-1 bg-purple-100 text-purple-800 border border-purple-200';
+
+  document.getElementById('goal-modal-title').textContent = g.name;
+  document.getElementById('goal-modal-target').textContent = `Target: ${g.target || '100%'} • Short Name: "${g.short_name || g.name}"`;
+
+  const pillarData = state.data.pillars ? state.data.pillars.find(p => p.id === g.pillar_id) : null;
+  document.getElementById('goal-modal-pillar-name').textContent = pillarData ? `${pillarData.name} Pillar (${pillarData.goal_count} Goals)` : `${g.pillar_id} Pillar`;
+  document.getElementById('goal-modal-pillar-desc').textContent = pillarData ? pillarData.description : '';
+
+  // Aggregate stats across all sites for this goal
+  const allSites = state.data.sites || [];
+  const statusCounts = {
+    on_track: 0,
+    at_risk: 0,
+    off_track: 0,
+    no_recent_update: 0,
+    achieved: 0,
+    partial: 0,
+    missed: 0,
+    dropped: 0
+  };
+  let healthy = 0;
+  let totalAssigned = 0;
+
+  allSites.forEach(s => {
+    const cell = state.data.cells[`${s.id}::${g.gid}`];
+    if (cell) {
+      totalAssigned++;
+      if (statusCounts.hasOwnProperty(cell.status_key)) {
+        statusCounts[cell.status_key]++;
+      }
+      if (STATUS_CONFIG[cell.status_key]?.isHealthy) {
+        healthy++;
+      }
+    }
+  });
+
+  const overallPct = totalAssigned > 0 ? Math.round((healthy / totalAssigned) * 100) : 0;
+  document.getElementById('goal-modal-overall-health').textContent = `${healthy}/${totalAssigned} sites on track (${overallPct}%)`;
+
+  const breakdownContainer = document.getElementById('goal-modal-status-breakdown');
+  breakdownContainer.innerHTML = `
+    <div class="p-2 rounded-lg bg-emerald-50 border border-emerald-200">
+      <span class="text-[10px] text-emerald-800 block font-medium">On Track</span>
+      <span class="text-base font-bold text-emerald-900">${statusCounts.on_track}</span>
+    </div>
+    <div class="p-2 rounded-lg bg-emerald-100 border border-emerald-300">
+      <span class="text-[10px] text-emerald-900 block font-medium">Achieved</span>
+      <span class="text-base font-bold text-emerald-950">${statusCounts.achieved}</span>
+    </div>
+    <div class="p-2 rounded-lg bg-amber-50 border border-amber-200">
+      <span class="text-[10px] text-amber-800 block font-medium">At Risk</span>
+      <span class="text-base font-bold text-amber-900">${statusCounts.at_risk}</span>
+    </div>
+    <div class="p-2 rounded-lg bg-rose-50 border border-rose-200">
+      <span class="text-[10px] text-rose-800 block font-medium">Off Track</span>
+      <span class="text-base font-bold text-rose-900">${statusCounts.off_track}</span>
+    </div>
+  `;
+
+  // Asana deep link
+  const asanaLink = document.getElementById('goal-modal-asana-link');
+  asanaLink.href = `https://app.asana.com/0/0/${g.gid}`;
+
+  modal.classList.remove('hidden');
+  if (window.lucide) window.lucide.createIcons();
+}
+
+/**
+ * Show Floating Popover Card on Goal Header Hover
+ */
+function showGoalHoverPopover(th, g) {
+  const popover = document.getElementById('goal-popover');
+  if (!popover || !state.data) return;
+
+  const pillarBadge = document.getElementById('popover-pillar-badge');
+  pillarBadge.textContent = `${g.pillar_id.toUpperCase()} PILLAR`;
+  pillarBadge.className = g.pillar_id === 'reach' ? 'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-200' :
+                          g.pillar_id === 'results' ? 'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                          'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200';
+
+  document.getElementById('popover-target-badge').textContent = `Target: ${g.target || '100%'}`;
+  document.getElementById('popover-full-name').textContent = g.name;
+  document.getElementById('popover-short-name').textContent = g.short_name || g.name;
+
+  // Calculate health summary for this goal across visible sites
+  const visibleSites = getFilteredAndSortedSites();
+  let healthy = 0;
+  let total = 0;
+  visibleSites.forEach(s => {
+    const cell = state.data.cells[`${s.id}::${g.gid}`];
+    if (cell) {
+      total++;
+      if (STATUS_CONFIG[cell.status_key]?.isHealthy) healthy++;
+    }
+  });
+  const pct = total > 0 ? Math.round((healthy / total) * 100) : 0;
+  document.getElementById('popover-health-summary').textContent = `${healthy}/${total} sites on track (${pct}%)`;
+
+  // Make visible
+  popover.classList.remove('hidden');
+
+  const rect = th.getBoundingClientRect();
+  const popWidth = 320;
+  let left = rect.left + (rect.width / 2) - (popWidth / 2);
+  if (left < 12) left = 12;
+  if (left + popWidth > window.innerWidth - 12) {
+    left = window.innerWidth - popWidth - 12;
+  }
+
+  let top = rect.bottom + 8;
+  if (top + popover.offsetHeight > window.innerHeight - 12) {
+    top = rect.top - popover.offsetHeight - 8;
+  }
+
+  popover.style.left = `${left}px`;
+  popover.style.top = `${top}px`;
+  if (window.lucide) window.lucide.createIcons();
+}
+
+/**
+ * Hide Floating Popover Card
+ */
+function hideGoalHoverPopover() {
+  const popover = document.getElementById('goal-popover');
+  if (popover) {
+    popover.classList.add('hidden');
+  }
+}
+
+/**
+ * Show non-intrusive Toast Notification
+ */
+function showToast(message, type = 'info', duration = 4000) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  const bg = type === 'success' ? 'bg-emerald-800 text-white border-emerald-700' :
+             type === 'error' ? 'bg-rose-800 text-white border-rose-700' :
+             'bg-slate-800 text-white border-slate-700';
+  const icon = type === 'success' ? 'check-circle' :
+               type === 'error' ? 'alert-triangle' : 'info';
+
+  toast.className = `pointer-events-auto flex items-center px-3.5 py-2.5 rounded-xl shadow-xl border text-xs font-medium space-x-2 transition-all transform translate-y-2 opacity-0 duration-200 ${bg}`;
+  toast.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4 flex-shrink-0"></i><span class="leading-snug">${message}</span>`;
+  container.appendChild(toast);
+  if (window.lucide) window.lucide.createIcons();
+
+  requestAnimationFrame(() => {
+    toast.classList.remove('translate-y-2', 'opacity-0');
+  });
+
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-y-2');
+    setTimeout(() => toast.remove(), 250);
+  }, duration);
+}
+
+/**
  * Setup Event Listeners
  */
 function setupEventListeners() {
@@ -833,7 +1043,60 @@ function setupEventListeners() {
   document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
 
   // Sync Button
-  document.getElementById('btn-sync').addEventListener('click', triggerAsanaSync);
+  document.getElementById('btn-sync').addEventListener('click', () => triggerAsanaSync({ silent: false }));
+
+  // Toggle Goal Names (Short vs Full)
+  const btnTitlesAbbr = document.getElementById('toggle-titles-abbr');
+  const btnTitlesFull = document.getElementById('toggle-titles-full');
+  if (btnTitlesAbbr && btnTitlesFull) {
+    btnTitlesAbbr.addEventListener('click', () => {
+      if (!state.showFullGoalNames) return;
+      state.showFullGoalNames = false;
+      btnTitlesAbbr.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-slate-800 shadow-xs transition';
+      btnTitlesFull.className = 'px-2 py-0.5 rounded-md font-medium text-slate-600 hover:text-slate-900 transition';
+      renderHeatmap();
+    });
+
+    btnTitlesFull.addEventListener('click', () => {
+      if (state.showFullGoalNames) return;
+      state.showFullGoalNames = true;
+      btnTitlesFull.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-slate-800 shadow-xs transition';
+      btnTitlesAbbr.className = 'px-2 py-0.5 rounded-md font-medium text-slate-600 hover:text-slate-900 transition';
+      renderHeatmap();
+    });
+  }
+
+  // Goal Modal Closers
+  const closeGoalModal = () => {
+    const modal = document.getElementById('goal-modal');
+    if (modal) modal.classList.add('hidden');
+  };
+  const goalModalClose = document.getElementById('goal-modal-close');
+  if (goalModalClose) goalModalClose.addEventListener('click', closeGoalModal);
+  const goalModalDismiss = document.getElementById('goal-modal-dismiss');
+  if (goalModalDismiss) goalModalDismiss.addEventListener('click', closeGoalModal);
+  const goalModal = document.getElementById('goal-modal');
+  if (goalModal) {
+    goalModal.addEventListener('click', (e) => {
+      if (e.target.id === 'goal-modal') closeGoalModal();
+    });
+  }
+
+  // Window resize to recompute sticky heights
+  window.addEventListener('resize', () => {
+    adjustStickyHeaderHeights();
+    hideGoalHoverPopover();
+  });
+
+  // ESC key to close all modals
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+      closeSettings();
+      closeGoalModal();
+      hideGoalHoverPopover();
+    }
+  });
 
   // Save Credentials Button in Settings Modal
   document.getElementById('btn-save-credentials').addEventListener('click', async () => {
@@ -857,31 +1120,57 @@ function setupEventListeners() {
   });
 }
 
+let isSyncing = false;
+
 /**
  * Trigger Asana Sync via Backend
  */
-async function triggerAsanaSync() {
+async function triggerAsanaSync(options = {}) {
+  const silent = options && options.silent === true;
+  if (isSyncing) return;
+  isSyncing = true;
+
   const syncBtn = document.getElementById('btn-sync');
   const originalText = syncBtn.innerHTML;
   syncBtn.disabled = true;
-  syncBtn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 mr-1.5 animate-spin"></i> Syncing...`;
+  syncBtn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 mr-1.5 animate-spin"></i> ${silent ? 'Syncing Asana...' : 'Syncing...'}`;
   if (window.lucide) window.lucide.createIcons();
 
   try {
     const res = await fetch('/api/sync', { method: 'POST' });
     if (res.ok) {
       const result = await res.json();
-      state.data = result;
-      updateHeaderMeta();
-      renderApp();
-      alert('Sync successful! Heatmap updated with the latest Asana data.');
+      // Defensive payload check per AGENTS.md Section 5.2
+      if (result && Array.isArray(result.sites) && result.cells && Object.keys(result.cells).length > 0) {
+        state.data = result;
+        updateHeaderMeta();
+        renderApp();
+        if (silent) {
+          showToast('Heatmap synchronized with latest Asana data', 'success', 3500);
+        } else {
+          showToast('Sync successful! Heatmap updated with latest Asana data.', 'success', 4000);
+        }
+      } else {
+        console.warn('Sync returned incomplete payload, keeping existing cache:', result);
+        if (!silent) {
+          showToast('Sync completed but received incomplete data from server.', 'error', 4000);
+        }
+      }
     } else {
       const err = await res.json().catch(() => ({}));
-      alert(err.message || 'Unable to sync with Asana API. Check your credentials in settings.');
+      const msg = err.error || err.message || `Sync failed (HTTP ${res.status})`;
+      console.warn('Asana sync warning:', msg);
+      if (!silent) {
+        showToast(msg, 'error', 5000);
+      }
     }
   } catch (err) {
-    alert('Local backend is running in Demo Mock Mode. To connect live Asana data, configure your API token in Asana Settings.');
+    console.warn('Sync request error:', err);
+    if (!silent) {
+      showToast('Could not connect to sync service. Ensure backend server is running.', 'error', 5000);
+    }
   } finally {
+    isSyncing = false;
     syncBtn.disabled = false;
     syncBtn.innerHTML = originalText;
     if (window.lucide) window.lucide.createIcons();
@@ -930,7 +1219,7 @@ async function saveCredentialsAndSync(pat, workspace) {
     });
     if (res.ok) {
       document.getElementById('settings-modal').classList.add('hidden');
-      await triggerAsanaSync();
+      await triggerAsanaSync({ silent: false });
     } else {
       alert('Could not save credentials to backend server.');
     }
