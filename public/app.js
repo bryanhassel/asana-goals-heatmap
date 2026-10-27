@@ -430,6 +430,10 @@ function renderHeatmap() {
 
   // 5. Dynamically align sticky header heights
   adjustStickyHeaderHeights();
+
+  // 6. Synchronize top horizontal scrollbar
+  updateTopScrollbar();
+  requestAnimationFrame(() => updateTopScrollbar());
 }
 
 /**
@@ -444,6 +448,98 @@ function adjustStickyHeaderHeights() {
     row2.style.top = `${row1Height}px`;
     const row2Height = row2.offsetHeight;
     row3.style.top = `${row1Height + row2Height}px`;
+  }
+}
+
+let activeScroller = null;
+let syncTimeout = null;
+let topScrollbarInitialized = false;
+
+/**
+ * Initialize Two-Way Scroll Synchronization between Top Scrollbar and Table Container
+ */
+function initTopScrollbar() {
+  if (topScrollbarInitialized) return;
+  topScrollbarInitialized = true;
+
+  const topScrollbar = document.getElementById('top-scrollbar-container');
+  const tableContainer = document.querySelector('.table-container');
+
+  if (!topScrollbar || !tableContainer) return;
+
+  // Scroll listener for Top Scrollbar
+  topScrollbar.addEventListener('scroll', () => {
+    if (activeScroller === 'table') return;
+    activeScroller = 'top';
+    tableContainer.scrollLeft = topScrollbar.scrollLeft;
+    clearTimeout(syncTimeout);
+    syncTimeout = setTimeout(() => {
+      activeScroller = null;
+    }, 50);
+  }, { passive: true });
+
+  // Scroll listener for Table Container (bottom scrollbar, trackpad, touch swipe, shift+wheel)
+  tableContainer.addEventListener('scroll', () => {
+    if (activeScroller === 'top') return;
+    if (topScrollbar.scrollLeft !== tableContainer.scrollLeft) {
+      activeScroller = 'table';
+      topScrollbar.scrollLeft = tableContainer.scrollLeft;
+      clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(() => {
+        activeScroller = null;
+      }, 50);
+    }
+  }, { passive: true });
+
+  // ResizeObserver to automatically update width if table or container dimensions change
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(() => {
+      updateTopScrollbar();
+    });
+    ro.observe(tableContainer);
+    const tableEl = document.getElementById('heatmap-table');
+    if (tableEl) {
+      ro.observe(tableEl);
+    }
+  }
+
+  // Initial sync
+  updateTopScrollbar();
+}
+
+/**
+ * Update Top Scrollbar width, margin compensation, and visibility
+ */
+function updateTopScrollbar() {
+  const topScrollbar = document.getElementById('top-scrollbar-container');
+  const topContent = document.getElementById('top-scrollbar-content');
+  const tableContainer = document.querySelector('.table-container');
+
+  if (!topScrollbar || !topContent || !tableContainer) return;
+
+  const scrollWidth = tableContainer.scrollWidth;
+  const clientWidth = tableContainer.clientWidth;
+  const hasHorizontalScroll = scrollWidth > clientWidth + 2;
+
+  if (!hasHorizontalScroll) {
+    topScrollbar.classList.add('hidden');
+    topScrollbar.style.display = 'none';
+    return;
+  }
+
+  topScrollbar.classList.remove('hidden');
+  topScrollbar.style.display = 'block';
+
+  // Set dummy content width to exactly match tableContainer's scrollWidth
+  topContent.style.width = `${scrollWidth}px`;
+
+  // Compensate for vertical scrollbar width so top track length matches tableContainer track length
+  const verticalScrollbarWidth = Math.max(0, tableContainer.offsetWidth - clientWidth);
+  topScrollbar.style.marginRight = verticalScrollbarWidth > 0 ? `${verticalScrollbarWidth}px` : '0px';
+
+  // Ensure scrollLeft is in sync
+  if (topScrollbar.scrollLeft !== tableContainer.scrollLeft) {
+    topScrollbar.scrollLeft = tableContainer.scrollLeft;
   }
 }
 
@@ -939,6 +1035,9 @@ function showToast(message, type = 'info', duration = 4000) {
  * Setup Event Listeners
  */
 function setupEventListeners() {
+  // Initialize top horizontal scrollbar sync
+  initTopScrollbar();
+
   // Search input
   const searchInput = document.getElementById('search-site');
   const clearBtn = document.getElementById('clear-search');
@@ -1088,9 +1187,10 @@ function setupEventListeners() {
     });
   }
 
-  // Window resize to recompute sticky heights
+  // Window resize to recompute sticky heights and scrollbars
   window.addEventListener('resize', () => {
     adjustStickyHeaderHeights();
+    updateTopScrollbar();
     hideGoalHoverPopover();
   });
 
