@@ -507,7 +507,7 @@ function renderGoalHeaderRow(visibleGoals) {
     th.classList.add(...accentColor.split(' '));
 
     const titleClamp = isFull ? '' : 'line-clamp-2';
-    const displayName = isFull ? g.name : (g.short_name || g.name);
+    const displayName = isFull ? (g.district_statement || g.name) : (g.short_name || g.name);
 
     th.innerHTML = `
       <div class="flex flex-col items-center justify-between h-full space-y-1">
@@ -710,7 +710,7 @@ function openDetailModal(site, goal, cellData, conf) {
   
   // Set site and goal info
   document.getElementById('modal-site-name').textContent = site.name;
-  document.getElementById('modal-goal-title').textContent = goal.name;
+  document.getElementById('modal-goal-title').textContent = goal.district_statement || goal.name;
   
   // Pillar badge
   const pillarBadge = document.getElementById('modal-pillar-badge');
@@ -729,7 +729,7 @@ function openDetailModal(site, goal, cellData, conf) {
   progressText.textContent = cellData && cellData.progress_pct !== undefined ? `${cellData.progress_pct}%` : '0%';
 
   // Subgoal name
-  document.getElementById('modal-subgoal-name').textContent = (cellData && cellData.subgoal_name) || goal.subgoal_template || goal.short_name;
+  document.getElementById('modal-subgoal-name').textContent = (cellData && cellData.subgoal_name) || (cellData && cellData.status_title && cellData.status_title.split(' - ')[0]) || goal.district_statement || goal.name;
 
   // Meta & Notes
   const meta = document.getElementById('modal-update-meta');
@@ -772,8 +772,10 @@ function openGoalDetailModal(g) {
                           g.pillar_id === 'results' ? 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold mb-1 bg-emerald-100 text-emerald-800 border border-emerald-200' :
                           'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold mb-1 bg-purple-100 text-purple-800 border border-purple-200';
 
-  document.getElementById('goal-modal-title').textContent = g.name;
+  document.getElementById('goal-modal-title').textContent = g.district_statement || g.name;
   document.getElementById('goal-modal-target').textContent = `Target: ${g.target || '100%'} • Short Name: "${g.short_name || g.name}"`;
+  const firmwideEl = document.getElementById('goal-modal-firmwide-text');
+  if (firmwideEl) firmwideEl.textContent = g.firmwide_name || g.name;
 
   const pillarData = state.data.pillars ? state.data.pillars.find(p => p.id === g.pillar_id) : null;
   document.getElementById('goal-modal-pillar-name').textContent = pillarData ? `${pillarData.name} Pillar (${pillarData.goal_count} Goals)` : `${g.pillar_id} Pillar`;
@@ -852,8 +854,12 @@ function showGoalHoverPopover(th, g) {
                           'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200';
 
   document.getElementById('popover-target-badge').textContent = `Target: ${g.target || '100%'}`;
-  document.getElementById('popover-full-name').textContent = g.name;
+  document.getElementById('popover-full-name').textContent = g.district_statement || g.name;
   document.getElementById('popover-short-name').textContent = g.short_name || g.name;
+  const popoverFirmwide = document.getElementById('popover-firmwide-name');
+  if (popoverFirmwide) {
+    popoverFirmwide.textContent = g.firmwide_name || '';
+  }
 
   // Calculate health summary for this goal across visible sites
   const visibleSites = getFilteredAndSortedSites();

@@ -5,18 +5,138 @@
  */
 
 const PARENT_GOALS = [
-  { gid: "1217867349410702", name: "Reach: 90% of districts commit to reaching 75-100% schools", short_name: "District Commitment (75-100%)", pillar: "reach", pillar_id: "reach", target: "90%", order: 1 },
-  { gid: "1217171254793815", name: "Reach: 50% of Y3+ schools have a specific staffing, $, and hiring plan to reach 75-100% of students in ‘27-28 (on track for Level 2+)", short_name: "Y3+ Staffing & $ Plan", pillar: "reach", pillar_id: "reach", target: "50%", order: 2 },
-  { gid: "1217171254793775", name: "Results: 500+ schools are certified at any level", short_name: "Certified Schools", pillar: "results", pillar_id: "results", target: "500+", order: 3 },
-  { gid: "1217867349410715", name: "Results: MCL Protected Time - 20% increase of implementing certified schools are at level 2+", short_name: "MCL Protected Time", pillar: "results", pillar_id: "results", target: "+20%", order: 4 },
-  { gid: "1217867349410712", name: "Results: Tutoring - 20% increase of implementing certified schools are at level 2+", short_name: "Tutoring L2+", pillar: "results", pillar_id: "results", target: "+20%", order: 5 },
-  { gid: "1217867349410709", name: "Results: Team Reach - 20% increase of implementing certified schools are at level 2+", short_name: "Team Reach L2+", pillar: "results", pillar_id: "results", target: "+20%", order: 6 },
-  { gid: "1217867349410706", name: "Results: MCL Reach - 20% increase of implementing certified schools are at level 2+", short_name: "MCL Reach L2+", pillar: "results", pillar_id: "results", target: "+20%", order: 7 },
-  { gid: "1217171254793813", name: "Relationships: 2 written reports, 2 conversations, and 2 information touchpoints with Superintendent Reports", short_name: "Supe Reports & Touchpoints", pillar: "relationships", pillar_id: "relationships", target: "2x2x2", order: 8 },
-  { gid: "1217171254793809", name: "Relationships: Client Net Promotor Score \"OC\": 60+", short_name: "Client NPS \"OC\"", pillar: "relationships", pillar_id: "relationships", target: "60+", order: 9 },
-  { gid: "1217171254793807", name: "Relationships: Client Net Promotor Score \"PI\": 50+", short_name: "Client NPS \"PI\"", pillar: "relationships", pillar_id: "relationships", target: "50+", order: 10 },
-  { gid: "1217171254793811", name: "Relationships: MCL Net Promotor Score \"OC\": 60+", short_name: "MCL NPS \"OC\"", pillar: "relationships", pillar_id: "relationships", target: "60+", order: 11 },
-  { gid: "1217867349410718", name: "Relationships: Client Net Promotor Score \"Portal\": 45+", short_name: "Client NPS \"Portal\"", pillar: "relationships", pillar_id: "relationships", target: "45+", order: 12 }
+  {
+    gid: "1217867349410702",
+    name: "District commits to reaching 75-100% of schools",
+    district_statement: "District commits to reaching 75-100% of schools",
+    firmwide_name: "Reach: 90% of districts commit to reaching 75-100% schools",
+    short_name: "District Commitment (75-100%)",
+    pillar: "reach",
+    pillar_id: "reach",
+    target: "90%",
+    order: 1
+  },
+  {
+    gid: "1217171254793815",
+    name: "# Y3+ schools have a specific staffing, $, and hiring plan to reach 75-100% of students in '27-28",
+    district_statement: "# Y3+ schools have a specific staffing, $, and hiring plan to reach 75-100% of students in '27-28",
+    firmwide_name: "Reach: 50% of Y3+ schools have a specific staffing, $, and hiring plan to reach 75-100% of students in ‘27-28 (on track for Level 2+)",
+    short_name: "Y3+ Staffing & $ Plan",
+    pillar: "reach",
+    pillar_id: "reach",
+    target: "50%",
+    order: 2
+  },
+  {
+    gid: "1217171254793775",
+    name: "100% of designing/imp schools certified at any level",
+    district_statement: "100% of designing/imp schools certified at any level",
+    firmwide_name: "Results: 500+ schools are certified at any level",
+    short_name: "Certified Schools",
+    pillar: "results",
+    pillar_id: "results",
+    target: "500+",
+    order: 3
+  },
+  {
+    gid: "1217867349410715",
+    name: "MCL Protected Time: # schools are at Level 2+",
+    district_statement: "MCL Protected Time: # schools are at Level 2+",
+    firmwide_name: "Results: MCL Protected Time - 20% increase of implementing certified schools are at level 2+",
+    short_name: "MCL Protected Time",
+    pillar: "results",
+    pillar_id: "results",
+    target: "+20%",
+    order: 4
+  },
+  {
+    gid: "1217867349410712",
+    name: "Tutoring: # schools at Level 2+",
+    district_statement: "Tutoring: # schools at Level 2+",
+    firmwide_name: "Results: Tutoring - 20% increase of implementing certified schools are at level 2+",
+    short_name: "Tutoring L2+",
+    pillar: "results",
+    pillar_id: "results",
+    target: "+20%",
+    order: 5
+  },
+  {
+    gid: "1217867349410709",
+    name: "Team Reach: # schools at Level 2+",
+    district_statement: "Team Reach: # schools at Level 2+",
+    firmwide_name: "Results: Team Reach - 20% increase of implementing certified schools are at level 2+",
+    short_name: "Team Reach L2+",
+    pillar: "results",
+    pillar_id: "results",
+    target: "+20%",
+    order: 6
+  },
+  {
+    gid: "1217867349410706",
+    name: "MCL Reach: # schools at Level 2+",
+    district_statement: "MCL Reach: # schools at Level 2+",
+    firmwide_name: "Results: MCL Reach - 20% increase of implementing certified schools are at level 2+",
+    short_name: "MCL Reach L2+",
+    pillar: "results",
+    pillar_id: "results",
+    target: "+20%",
+    order: 7
+  },
+  {
+    gid: "1217171254793813",
+    name: "2 written reports, 2 conversations, and 2 information touchpoints with supe",
+    district_statement: "2 written reports, 2 conversations, and 2 information touchpoints with supe",
+    firmwide_name: "Relationships: 2 written reports, 2 conversations, and 2 information touchpoints with Superintendent Reports",
+    short_name: "Supe Reports & Touchpoints",
+    pillar: "relationships",
+    pillar_id: "relationships",
+    target: "2x2x2",
+    order: 8
+  },
+  {
+    gid: "1217171254793809",
+    name: "Client NPS \"OC\": 9 or 10",
+    district_statement: "Client NPS \"OC\": 9 or 10",
+    firmwide_name: "Relationships: Client Net Promotor Score \"OC\": 60+",
+    short_name: "Client NPS \"OC\"",
+    pillar: "relationships",
+    pillar_id: "relationships",
+    target: "60+",
+    order: 9
+  },
+  {
+    gid: "1217171254793807",
+    name: "Client NPS \"PI\": 9 or 10",
+    district_statement: "Client NPS \"PI\": 9 or 10",
+    firmwide_name: "Relationships: Client Net Promotor Score \"PI\": 50+",
+    short_name: "Client NPS \"PI\"",
+    pillar: "relationships",
+    pillar_id: "relationships",
+    target: "50+",
+    order: 10
+  },
+  {
+    gid: "1217171254793811",
+    name: "MCL NPS \"OC\": 9 or 10",
+    district_statement: "MCL NPS \"OC\": 9 or 10",
+    firmwide_name: "Relationships: MCL Net Promotor Score \"OC\": 60+",
+    short_name: "MCL NPS \"OC\"",
+    pillar: "relationships",
+    pillar_id: "relationships",
+    target: "60+",
+    order: 11
+  },
+  {
+    gid: "1217867349410718",
+    name: "Client NPS \"Portal\": 9 or 10",
+    district_statement: "Client NPS \"Portal\": 9 or 10",
+    firmwide_name: "Relationships: Client Net Promotor Score \"Portal\": 45+",
+    short_name: "Client NPS \"Portal\"",
+    pillar: "relationships",
+    pillar_id: "relationships",
+    target: "45+",
+    order: 12
+  }
 ];
 
 const PILLARS = [
@@ -145,6 +265,7 @@ export async function onRequestPost(context) {
         cellsDict[cellKey] = {
           goal_gid: parent.gid,
           subgoal_gid: sub.gid,
+          subgoal_name: sub.name ? sub.name.trim() : "",
           site_id: siteId,
           site_name: siteName,
           status_key: statusKey,

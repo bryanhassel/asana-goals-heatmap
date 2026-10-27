@@ -620,7 +620,7 @@
       <div class="flex items-start justify-between pb-3 border-b border-slate-100">
         <div>
           <span id="goal-modal-pillar-badge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold mb-1">Pillar</span>
-          <h3 id="goal-modal-title" class="text-base font-bold text-slate-900 leading-snug">Parent Goal Title</h3>
+          <h3 id="goal-modal-title" class="text-base font-bold text-slate-900 leading-snug">District Goal Statement</h3>
           <p id="goal-modal-target" class="text-xs text-slate-500 mt-0.5">Target Metric</p>
         </div>
         <button id="goal-modal-close" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
@@ -637,6 +637,10 @@
             <span id="goal-modal-pillar-name" class="font-bold text-slate-800 text-xs">Reach</span>
           </div>
           <p id="goal-modal-pillar-desc" class="text-xs text-slate-600 leading-relaxed">Pillar description here.</p>
+          <div id="goal-modal-firmwide-row" class="pt-2 border-t border-slate-200/80 text-[11px]">
+            <span class="font-semibold text-slate-500 uppercase tracking-wider text-[10px] block">Firmwide Parent Goal:</span>
+            <span id="goal-modal-firmwide-text" class="text-slate-700 font-medium"></span>
+          </div>
         </div>
 
         <!-- Aggregate Adoption & Health Stats -->
@@ -684,8 +688,8 @@
       </span>
     </div>
     <div>
-      <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Full Strategic Goal Statement</p>
-      <h4 id="popover-full-name" class="text-xs font-bold text-slate-900 leading-snug mt-0.5">Full Goal Title</h4>
+      <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">District Goal Statement</p>
+      <h4 id="popover-full-name" class="text-xs font-bold text-slate-900 leading-snug mt-0.5">District Goal Title</h4>
     </div>
     <div class="bg-slate-50 p-2 rounded-lg border border-slate-100 text-[11px] space-y-1">
       <div class="flex items-center justify-between text-slate-600">
@@ -695,6 +699,10 @@
       <div class="flex items-center justify-between text-slate-600">
         <span class="font-medium">District Health:</span>
         <span id="popover-health-summary" class="font-semibold text-emerald-700">0% on track</span>
+      </div>
+      <div id="popover-firmwide-row" class="pt-1 border-t border-slate-200/60 text-[10px] text-slate-500">
+        <span class="font-semibold text-slate-600 block">Firmwide Parent:</span>
+        <span id="popover-firmwide-name" class="text-slate-600 italic leading-snug line-clamp-2"></span>
       </div>
     </div>
     <p class="text-[10px] text-slate-400 italic flex items-center pt-0.5">
